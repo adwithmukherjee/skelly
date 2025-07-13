@@ -1,0 +1,15 @@
+# Build outputs
+dist
+build
+.next
+.turbo
+
+# Dependencies
+node_modules
+
+# Generated files
+*.tsbuildinfo
+coverage
+
+# Misc
+*.md
