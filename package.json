@@ -13,7 +13,14 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "type-check": "turbo type-check",
-    "clean": "turbo clean && rm -rf node_modules"
+    "clean": "turbo clean && rm -rf node_modules",
+    "docker:start": "./scripts/docker-helper.sh start",
+    "docker:stop": "./scripts/docker-helper.sh stop",
+    "docker:restart": "./scripts/docker-helper.sh restart",
+    "docker:logs": "./scripts/docker-helper.sh logs",
+    "docker:reset": "./scripts/docker-helper.sh reset",
+    "docker:psql": "./scripts/docker-helper.sh psql",
+    "docker:redis": "./scripts/docker-helper.sh redis"
   },
   "devDependencies": {
     "turbo": "^2.5.4"
