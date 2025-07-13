@@ -2,7 +2,7 @@ export interface PaginationParams {
   page: number;
   limit: number;
   orderBy?: string;
-  orderDirection?: "asc" | "desc";
+  orderDirection?: 'asc' | 'desc';
 }
 
 export interface PaginatedResponse<T> {
@@ -32,11 +32,11 @@ export interface ApiError {
 }
 
 export interface HealthCheckResponse {
-  status: "healthy" | "unhealthy";
+  status: 'healthy' | 'unhealthy';
   timestamp: Date;
   services: {
     [key: string]: {
-      status: "up" | "down";
+      status: 'up' | 'down';
       latency?: number;
       error?: string;
     };

@@ -1,4 +1,4 @@
-import { UserRole } from "./user";
+import { UserRole } from './user';
 
 export interface JWTClaims {
   sub: string; // user id

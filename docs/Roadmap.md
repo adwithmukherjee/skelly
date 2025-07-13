@@ -30,7 +30,7 @@ This roadmap outlines the implementation plan for setting up the AI-friendly mon
   - Configure package.json with proper exports
   - Add type-level tests setup
 
-- [ ] **TICKET-005**: Initialize packages/utils
+- [x] **TICKET-005**: Initialize packages/utils
   - Create logger.ts with Pino configuration
   - Implement env.ts with Zod validation
   - Create error.ts with custom error classes
