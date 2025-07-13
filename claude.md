@@ -173,6 +173,7 @@ This enables AI agents to generate new features autonomously using consistent co
 Agents should:
 
 - Use existing models/types as references before creating new ones
+- When creating a new pattern, document how this pattern should be re-used in a claude.md file in that directory.
 - Add tests when creating new controllers/services
 - Respect the domain boundaries (no DB access in controllers, etc)
 - Register routes in `routes/index.ts`
@@ -191,3 +192,28 @@ When creating a new resource (e.g. `Post`, `Project`, `Org`), ensure:
 - [ ] Unit + integration tests exist
 - [ ] All relevant indexes and foreign keys are defined in DB
 - [ ] Feature is registered in `feature-map.json` (for agent awareness)
+
+## ‼️ Picking Up Where You Left Off 
+
+When you start a session, take a look at `docs/Roadmap.md` to see the tickets that you've completed and the tickets that you have left to do. 
+For more information on the work done for each ticket, see the other markdown files in the `docs` folder. 
+
+## Working on a Ticket 
+
+- Once you claim a ticket, please create a new, numbered markdown file in `docs` starting with the number of the ticket followed by the name of the ticket in kebab case. 
+
+- With every design decision and non-trivial code update made while working on a ticket, update this markdown file with the change you made and the rationale.
+
+- Once you've completed a ticket, conclude this markdown file with a summary of the work done.
+
+## Documenting Design Patterns
+
+- Major architectural patterns and design decisions should be documented in `docs/design/`
+- Create descriptive markdown files for patterns that will be reused across the codebase
+- Examples of design documents to create:
+  - `event-driven-architecture.md` - How events flow between frontend and backend
+  - `error-handling-patterns.md` - Standardized error handling across services
+  - `authentication-flow.md` - JWT token management and session handling
+  - `api-design-principles.md` - REST API conventions and patterns
+  - `testing-strategy.md` - Testing patterns and best practices
+- Reference these design documents when implementing related features 
