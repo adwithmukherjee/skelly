@@ -178,7 +178,7 @@ Agents should:
 - Respect the domain boundaries (no DB access in controllers, etc)
 - Register routes in `routes/index.ts`
 - Register task handlers in `worker/src/handlers/index.ts`
-- Document any new entities or routes in `feature-map.json` or similarf
+- Document any new entities or routes in `feature-map.json` or similar
 
 ## ✅ Feature Requirements Checklist
 
@@ -202,7 +202,11 @@ For more information on the work done for each ticket, see the other markdown fi
 
 - Once you claim a ticket, please create a new, numbered markdown file in `docs` starting with the number of the ticket followed by the name of the ticket in kebab case. 
 
+- When you start a ticket, first come up with a high level approach and make any important design decisions. I will confirm that these decisions before you move on. 
+
 - With every design decision and non-trivial code update made while working on a ticket, update this markdown file with the change you made and the rationale.
+
+- Before completing a ticket, make sure to run any tests you have written and make sure they pass. 
 
 - Once you've completed a ticket, conclude this markdown file with a summary of the work done.
 
