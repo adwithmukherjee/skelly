@@ -37,7 +37,7 @@ This roadmap outlines the implementation plan for setting up the AI-friendly mon
   - Add http.ts with retry logic
   - Set up unit tests for utilities
 
-- [ ] **TICKET-006**: Initialize packages/db
+- [x] **TICKET-006**: Initialize packages/db
   - Install Drizzle ORM and PostgreSQL driver
   - Configure database connection
   - Create base schema structure

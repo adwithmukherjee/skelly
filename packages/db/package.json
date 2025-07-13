@@ -1,0 +1,46 @@
+{
+  "name": "@skelly/db",
+  "version": "1.0.0",
+  "description": "Database layer with Drizzle ORM for the Skelly monorepo",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "migrations"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:schema": "vitest run src/__tests__/schema-validation.test.ts",
+    "db:migrate:up": "tsx src/migrate.ts up",
+    "db:migrate:down": "tsx src/migrate.ts down",
+    "db:migrate:status": "tsx src/migrate.ts status",
+    "db:seed": "tsx src/seed.ts",
+    "db:reset": "tsx src/migrate.ts down 999 && tsx src/migrate.ts up && tsx src/seed.ts"
+  },
+  "keywords": [
+    "database",
+    "drizzle",
+    "postgresql"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@skelly/types": "*",
+    "@skelly/utils": "*",
+    "drizzle-orm": "^0.29.0",
+    "postgres": "^3.4.0"
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "^11.2.1",
+    "@types/node": "^20.10.0",
+    "@types/pg": "^8.10.0",
+    "pg-structure": "^7.15.3",
+    "tsx": "^4.6.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  }
+}
