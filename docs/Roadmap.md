@@ -44,7 +44,28 @@ This roadmap outlines the implementation plan for setting up the AI-friendly mon
   - Set up migration tooling
   - Create seed script structure
 
-- [ ] **TICKET-007**: Initialize packages/auth
+### Sprint 3: API Application Setup
+- [ ] **TICKET-007**: Bootstrap Express API server
+  - Initialize apps/api with Express
+  - Configure TypeScript and build process
+  - Set up basic middleware (cors, helmet, etc.)
+  - Create index.ts entry point
+  - Add nodemon for development
+
+- [ ] **TICKET-008**: Implement API routing structure
+  - Create src/routes directory structure
+  - Implement route registration system
+  - Add health check endpoint
+  - Create route documentation pattern
+
+- [ ] **TICKET-009**: Set up controllers and services layers
+  - Create src/controllers directory
+  - Create src/services directory
+  - Implement base controller patterns
+  - Add dependency injection setup
+  - Create example user controller/service
+
+- [ ] **TICKET-010**: Initialize packages/auth
   - Implement JWT token generation/validation
   - Create authentication middleware
   - Implement RBAC (Role-Based Access Control)
@@ -52,27 +73,6 @@ This roadmap outlines the implementation plan for setting up the AI-friendly mon
   - Create auth-related tests
 
 ## 📋 Phase 2: Core Applications
-
-### Sprint 3: API Application Setup
-- [ ] **TICKET-008**: Bootstrap Express API server
-  - Initialize apps/api with Express
-  - Configure TypeScript and build process
-  - Set up basic middleware (cors, helmet, etc.)
-  - Create index.ts entry point
-  - Add nodemon for development
-
-- [ ] **TICKET-009**: Implement API routing structure
-  - Create src/routes directory structure
-  - Implement route registration system
-  - Add health check endpoint
-  - Create route documentation pattern
-
-- [ ] **TICKET-010**: Set up controllers and services layers
-  - Create src/controllers directory
-  - Create src/services directory
-  - Implement base controller patterns
-  - Add dependency injection setup
-  - Create example user controller/service
 
 - [ ] **TICKET-011**: Integrate authentication middleware
   - Connect packages/auth to API
