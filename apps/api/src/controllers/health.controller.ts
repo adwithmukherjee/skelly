@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { BaseController } from './base.controller';
-import { DatabaseHealthCheck } from '../types/services';
+import { BaseController } from '../core';
+import type { checkDatabaseConnection } from '@skelly/db';
 
 interface HealthCheckResponse {
   status: 'healthy' | 'unhealthy';
@@ -15,7 +15,7 @@ interface HealthCheckResponse {
 }
 
 interface HealthControllerDeps {
-  checkDatabaseConnection: DatabaseHealthCheck;
+  checkDatabaseConnection: typeof checkDatabaseConnection;
 }
 
 export class HealthController extends BaseController {

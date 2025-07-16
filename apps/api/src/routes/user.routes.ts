@@ -1,4 +1,4 @@
-import { RouteGroup } from './types';
+import { RouteGroup } from '../core';
 import { UserController, createUserSchema, updateUserSchema, userIdSchema, listUsersSchema } from '../controllers/user.controller';
 
 export function createUserRoutes(controller: UserController): RouteGroup {

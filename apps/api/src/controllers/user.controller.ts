@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { BaseController } from './base.controller';
+import { BaseController } from '../core';
 import { NotFoundError, ValidationError } from '@skelly/utils';
 import { UserService } from '../services/user.service';
 

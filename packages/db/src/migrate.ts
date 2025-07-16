@@ -8,7 +8,7 @@ import { QueryError, TransactionError } from './errors';
 // Define migration-specific environment schema
 const migrationEnv = createEnv((base) => ({
   ...base.shape,
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string().url().optional(),
 }));
 
 const MIGRATIONS_TABLE = 'migrations';

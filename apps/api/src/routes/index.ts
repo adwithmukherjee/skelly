@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { registerRouteGroups } from './builder';
+import { registerRouteGroups } from '../core';
 import { createHealthRoutes } from './health.routes';
 import { createUserRoutes } from './user.routes';
 import { getHealthController, getUserController } from '../container';

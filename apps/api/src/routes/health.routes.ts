@@ -1,4 +1,4 @@
-import { RouteGroup } from './types';
+import { RouteGroup } from '../core';
 import { HealthController } from '../controllers/health.controller';
 
 export function createHealthRoutes(controller: HealthController): RouteGroup {
