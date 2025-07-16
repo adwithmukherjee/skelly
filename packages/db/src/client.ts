@@ -1,8 +1,15 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { env, logger } from '@skelly/utils';
+import { createEnv, logger } from '@skelly/utils';
+import { z } from 'zod';
 import { ConnectionError } from './errors';
 import * as schema from './schema';
+
+// Define DB-specific environment schema
+const dbEnv = createEnv((base) => ({
+  ...base.shape,
+  DATABASE_URL: z.string().url().optional(),
+}));
 
 let client: postgres.Sql | undefined;
 let db: ReturnType<typeof drizzle> | undefined;
@@ -15,7 +22,7 @@ export interface DatabaseConfig {
 }
 
 export const createDatabaseClient = (config: DatabaseConfig = {}) => {
-  const connectionString = config.connectionString || env.DATABASE_URL;
+  const connectionString = config.connectionString || dbEnv.DATABASE_URL;
   
   if (!connectionString) {
     throw new ConnectionError('DATABASE_URL is not configured');
@@ -23,17 +30,17 @@ export const createDatabaseClient = (config: DatabaseConfig = {}) => {
 
   try {
     client = postgres(connectionString, {
-      max: config.max || (env.NODE_ENV === 'production' ? 20 : 5),
+      max: config.max || (dbEnv.NODE_ENV === 'production' ? 20 : 5),
       idle_timeout: config.idleTimeout || 20,
       connect_timeout: config.connectionTimeout || 10,
-      onnotice: env.NODE_ENV === 'development' ? (notice) => logger.debug('PostgreSQL Notice:', notice) : undefined,
+      onnotice: dbEnv.NODE_ENV === 'development' ? (notice) => logger.debug('PostgreSQL Notice:', notice) : undefined,
     });
 
     db = drizzle(client, { schema });
     
     logger.info('Database client initialized', {
       host: new URL(connectionString).hostname,
-      max: config.max || (env.NODE_ENV === 'production' ? 20 : 5),
+      max: config.max || (dbEnv.NODE_ENV === 'production' ? 20 : 5),
     });
 
     return db;
