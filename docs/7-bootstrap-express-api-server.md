@@ -191,3 +191,51 @@ Successfully bootstrapped the Express API server with:
 - ✅ Environment configuration with type safety
 
 The API server is now ready to handle HTTP traffic and provides a solid foundation for building RESTful endpoints. The request-scoped logging ensures all logs can be traced back to specific requests, making debugging and monitoring much easier.
+
+## Scalable Router/Controller Pattern Update
+
+### Design Goals
+1. **Separation of Concerns** - Route definitions separate from business logic
+2. **Type Safety** - Full TypeScript support with proper typing
+3. **Testability** - Easy to unit test controllers without HTTP context
+4. **Consistency** - Standard pattern for all routes
+5. **Scalability** - Easy to add new routes and controllers
+
+### Pattern Structure
+```
+src/
+├── routes/
+│   ├── index.ts         # Main route registry
+│   ├── health.routes.ts # Health check route definitions
+│   └── user.routes.ts   # User route definitions
+├── controllers/
+│   ├── base.controller.ts    # Base controller class
+│   ├── health.controller.ts  # Health check business logic
+│   └── user.controller.ts    # User business logic
+└── services/            # Business logic (unchanged)
+```
+
+### Key Components
+
+#### 1. Route Definition Files
+- Define routes with their paths, methods, and handler references
+- Include validation middleware
+- Document API endpoints
+
+#### 2. Controller Classes
+- Contain request handlers as methods
+- Handle request/response transformation
+- Delegate to services for business logic
+- Use base controller for common functionality
+
+#### 3. Base Controller
+- Provides common utilities (async handler wrapper, response helpers)
+- Standardizes error handling
+- Provides typed request/response helpers
+
+### Benefits
+- Controllers are easily testable without HTTP context
+- Route definitions serve as API documentation
+- Business logic is clearly separated from HTTP concerns
+- Easy to add middleware to specific routes
+- Consistent error handling and response format

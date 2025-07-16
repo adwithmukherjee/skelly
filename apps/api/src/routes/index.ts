@@ -1,14 +1,24 @@
 import { Router } from 'express';
-import { healthRouter } from './health';
+import { registerRouteGroups } from './builder';
+import { createHealthRoutes } from './health.routes';
+import { createUserRoutes } from './user.routes';
+import { getHealthController, getUserController } from '../container';
 
 export function createRouter(): Router {
   const router = Router();
 
-  // Mount health check route (no prefix needed)
-  router.use(healthRouter);
+  // Get controllers from DI container
+  const healthController = getHealthController();
+  const userController = getUserController();
 
-  // API routes will be mounted here with prefix
-  // Example: router.use(`/api/v1/users`, userRouter);
+  // Create route groups
+  const routeGroups = [
+    createHealthRoutes(healthController),
+    createUserRoutes(userController),
+  ];
+
+  // Register all route groups
+  registerRouteGroups(router, routeGroups);
 
   return router;
 }

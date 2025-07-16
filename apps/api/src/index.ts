@@ -1,9 +1,13 @@
 import { logger } from '@skelly/utils';
 import { createApp } from './app';
 import { config } from './config';
+import { initializeContainer } from './container';
 
 async function start() {
   try {
+    // Initialize dependency injection container
+    initializeContainer();
+    
     const app = createApp();
     const port = parseInt(config.PORT, 10);
 
