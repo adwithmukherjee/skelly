@@ -1,7 +1,9 @@
 import { RouteGroup } from '../core';
-import { HealthController } from '../controllers/health.controller';
+import { createHealthHandlers, HealthControllerDeps } from '../handlers/health';
 
-export function createHealthRoutes(controller: HealthController): RouteGroup {
+export function createHealthRoutes(deps: HealthControllerDeps): RouteGroup {
+  const handlers = createHealthHandlers(deps);
+
   return {
     prefix: '/health',
     description: 'Health check endpoints for monitoring service status',
@@ -9,7 +11,7 @@ export function createHealthRoutes(controller: HealthController): RouteGroup {
       {
         method: 'get',
         path: '/',
-        handler: controller.checkHealth,
+        handler: handlers.checkHealth,
         description:
           'Main health check endpoint - checks all service dependencies',
         tags: ['health', 'monitoring'],
@@ -17,7 +19,7 @@ export function createHealthRoutes(controller: HealthController): RouteGroup {
       {
         method: 'get',
         path: '/ready',
-        handler: controller.checkReadiness,
+        handler: handlers.checkReadiness,
         description:
           'Readiness probe - indicates if the service is ready to accept traffic',
         tags: ['health', 'kubernetes'],
@@ -25,7 +27,7 @@ export function createHealthRoutes(controller: HealthController): RouteGroup {
       {
         method: 'get',
         path: '/live',
-        handler: controller.checkLiveness,
+        handler: handlers.checkLiveness,
         description: 'Liveness probe - indicates if the service is alive',
         tags: ['health', 'kubernetes'],
       },
