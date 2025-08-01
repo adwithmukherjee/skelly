@@ -28,7 +28,9 @@ export async function createTestDatabase(): Promise<TestDatabase> {
   logger.info('Test container started', { connectionString });
   
   const migrator = new Migrator(connectionString);
-  const sql = postgres(connectionString);
+  const sql = postgres(connectionString, {
+    onnotice: () => {}, // Suppress NOTICE messages
+  });
   const db = drizzle(sql);
   
   return {

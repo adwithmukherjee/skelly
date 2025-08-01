@@ -20,10 +20,11 @@
     "docker:logs": "./scripts/docker-helper.sh logs",
     "docker:reset": "./scripts/docker-helper.sh reset",
     "docker:psql": "./scripts/docker-helper.sh psql",
-    "docker:redis": "./scripts/docker-helper.sh redis"
+    "docker:redis": "./scripts/docker-helper.sh redis",
+    "api:dev": "npm --prefix apps/api run dev"
   },
   "devDependencies": {
-    "turbo": "^2.5.4"
+    "turbo": "^2.5.5"
   },
   "engines": {
     "node": ">=20.0.0"

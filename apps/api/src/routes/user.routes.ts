@@ -1,7 +1,9 @@
 import { RouteGroup } from '../core';
-import { UserController, createUserSchema, updateUserSchema, userIdSchema, listUsersSchema } from '../controllers/user.controller';
+import { createUserHandlers, UserControllerDeps } from '../handlers/users';
 
-export function createUserRoutes(controller: UserController): RouteGroup {
+export function createUserRoutes(deps: UserControllerDeps): RouteGroup {
+  const handlers = createUserHandlers(deps);
+
   return {
     prefix: '/users',
     description: 'User management endpoints',
@@ -9,51 +11,35 @@ export function createUserRoutes(controller: UserController): RouteGroup {
       {
         method: 'get',
         path: '/',
-        handler: controller.listUsers,
-        validation: {
-          query: listUsersSchema,
-        },
+        handler: handlers.listUsers,
         description: 'List all users with pagination and filtering',
         tags: ['users'],
       },
       {
         method: 'get',
         path: '/:id',
-        handler: controller.getUser,
-        validation: {
-          params: userIdSchema,
-        },
+        handler: handlers.getUser,
         description: 'Get a specific user by ID',
         tags: ['users'],
       },
       {
         method: 'post',
         path: '/',
-        handler: controller.createUser,
-        validation: {
-          body: createUserSchema,
-        },
+        handler: handlers.createUser,
         description: 'Create a new user',
         tags: ['users'],
       },
       {
         method: 'patch',
         path: '/:id',
-        handler: controller.updateUser,
-        validation: {
-          params: userIdSchema,
-          body: updateUserSchema,
-        },
+        handler: handlers.updateUser,
         description: 'Update an existing user',
         tags: ['users'],
       },
       {
         method: 'delete',
         path: '/:id',
-        handler: controller.deleteUser,
-        validation: {
-          params: userIdSchema,
-        },
+        handler: handlers.deleteUser,
         description: 'Delete a user',
         tags: ['users'],
       },

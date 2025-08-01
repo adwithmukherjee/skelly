@@ -38,7 +38,7 @@ export class Migrator {
 
     this.sql = postgres(dbUrl, {
       max: 1,
-      onnotice: (notice) => logger.debug('Migration notice:', notice),
+      onnotice: () => {}, // Suppress NOTICE messages
     });
   }
 

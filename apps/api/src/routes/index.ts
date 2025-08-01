@@ -2,19 +2,19 @@ import { Router } from 'express';
 import { registerRouteGroups } from '../core';
 import { createHealthRoutes } from './health.routes';
 import { createUserRoutes } from './user.routes';
-import { getHealthController, getUserController } from '../container';
+import { getHealthDeps, getUserDeps } from '../container';
 
 export function createRouter(): Router {
   const router = Router();
 
-  // Get controllers from DI container
-  const healthController = getHealthController();
-  const userController = getUserController();
+  // Get dependencies from DI container
+  const healthDeps = getHealthDeps();
+  const userDeps = getUserDeps();
 
   // Create route groups
   const routeGroups = [
-    createHealthRoutes(healthController),
-    createUserRoutes(userController),
+    createHealthRoutes(healthDeps),
+    createUserRoutes(userDeps),
   ];
 
   // Register all route groups
