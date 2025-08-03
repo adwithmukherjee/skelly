@@ -187,32 +187,22 @@ For each endpoint:
 4. Run tests and fix until all pass
 5. Only then move to the next endpoint
 
-#### 3.2 Service Layer
-Add methods to existing services or create new ones:
+#### 3.2 Repository & Service Layers
+
+The API uses a clean separation between data access (repositories) and business logic (services):
+
+##### Repository Layer (Data Access)
+Repositories handle all data access, whether from the database or external APIs:
 
 ```typescript
-// src/services/project.service.ts
+// packages/repositories/src/database/project.repository.ts
+import { DatabaseRepository } from '../base/database.repository';
 import { Project, NewProject, projects } from '@skelly/db';
 import { eq } from '@skelly/db';
-import type { Database } from '@skelly/db';
 
-interface ProjectServiceDeps {
-  db: Database;
-}
-
-export class ProjectService {
-  constructor(private readonly deps: ProjectServiceDeps) {}
-
-  async create(data: NewProject): Promise<Project> {
-    const [project] = await this.deps.db
-      .insert(projects)
-      .values(data)
-      .returning();
-    return project;
-  }
-
+export class ProjectRepository extends DatabaseRepository<Project> {
   async findById(id: string): Promise<Project | null> {
-    const [project] = await this.deps.db
+    const [project] = await this.db
       .select()
       .from(projects)
       .where(eq(projects.id, id))
@@ -220,7 +210,56 @@ export class ProjectService {
     return project || null;
   }
 
-  // Add other methods...
+  async create(data: NewProject): Promise<Project> {
+    const [project] = await this.db
+      .insert(projects)
+      .values(data)
+      .returning();
+    return project;
+  }
+
+  // Only data access methods, no business logic
+}
+```
+
+##### Service Layer (Business Logic)
+Services contain business logic and orchestrate between repositories:
+
+```typescript
+// packages/services/src/project.service.ts
+import { ProjectRepository } from '@skelly/repositories';
+import { ValidationError } from '@skelly/utils';
+
+interface ProjectServiceDeps {
+  projectRepository: ProjectRepository;
+  logger: Logger;
+}
+
+export class ProjectService {
+  constructor(private deps: ProjectServiceDeps) {}
+
+  async createProject(data: CreateProjectDto) {
+    // Business validation
+    const existing = await this.deps.projectRepository.findByName(data.name);
+    if (existing) {
+      throw new ValidationError('Project name already exists');
+    }
+
+    // Create via repository
+    const project = await this.deps.projectRepository.create({
+      name: data.name,
+      description: data.description,
+      ownerId: data.ownerId,
+    });
+
+    this.deps.logger.info('Project created', { projectId: project.id });
+
+    // Return with domain events
+    return {
+      project,
+      events: [{ type: 'project.created', payload: { projectId: project.id } }]
+    };
+  }
 }
 ```
 
@@ -323,25 +362,31 @@ export function createProjectRoutes(deps: ProjectControllerDeps): RouteGroup {
 ```
 
 #### 3.5 Dependency Injection
-Update the container:
+Update the container with repositories and services:
 
 ```typescript
-// src/container.ts
-import { ProjectService } from './services/project.service';
+// apps/api/src/container.ts
+import { ProjectRepository } from '@skelly/repositories';
+import { ProjectService } from '@skelly/services';
 import { ProjectControllerDeps } from './handlers/projects';
 
+let projectRepository: ProjectRepository;
 let projectService: ProjectService;
 let projectDeps: ProjectControllerDeps;
 
 export async function initializeContainer(inputs?: { dbClient?: DbClient }) {
   const db = inputs?.dbClient ?? dbClient;
 
-  // Initialize services
+  // Initialize repositories
+  projectRepository = new ProjectRepository(await db.get());
+
+  // Initialize services with repositories
   projectService = new ProjectService({
-    db: await db.get(),
+    projectRepository,
+    logger,
   });
 
-  // Initialize dependencies
+  // Initialize handler dependencies
   projectDeps = {
     projectService,
   };

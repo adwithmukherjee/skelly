@@ -31,14 +31,54 @@ export const createResourceHandler = (deps: ResourceControllerDeps) =>
   );
 ```
 
-### Service Pattern
-Services use the Database type from @skelly/db:
+### Repository & Service Patterns
+
+The application separates data access (repositories) from business logic (services):
+
+#### Repository Pattern
+Repositories handle all data access:
 
 ```typescript
-import type { Database } from '@skelly/db';
+// packages/repositories/src/database/user.repository.ts
+import { DatabaseRepository } from '../base/database.repository';
+import { User, NewUser, users } from '@skelly/db';
+import { eq } from '@skelly/db';
 
-interface ServiceDeps {
-  db: Database;
+export class UserRepository extends DatabaseRepository<User> {
+  async findById(id: string): Promise<User | null> {
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+    return user || null;
+  }
+  
+  // Only data access, no business logic
+}
+```
+
+#### Service Pattern
+Services contain business logic and use repositories:
+
+```typescript
+// packages/services/src/user.service.ts
+import { UserRepository } from '@skelly/repositories';
+import { Logger } from '@skelly/utils';
+
+interface UserServiceDeps {
+  userRepository: UserRepository;
+  logger: Logger;
+}
+
+export class UserService {
+  constructor(private deps: UserServiceDeps) {}
+  
+  async createUser(data: CreateUserDto) {
+    // Business logic here
+    const user = await this.deps.userRepository.create(data);
+    return { user, events: [...] };
+  }
 }
 ```
 
@@ -132,9 +172,20 @@ throw new ValidationError('Email already in use', {
 
 ### Container Updates
 When adding a new resource:
-1. Initialize service in `initializeContainer()`
-2. Create getter function `get[Resource]Deps()`
-3. Add to `getRouteGroups()` return object
+1. Initialize repository in `initializeContainer()`
+2. Initialize service with repository dependencies
+3. Create getter function `get[Resource]Deps()`
+4. Add to `getRouteGroups()` return object
+
+Example:
+```typescript
+// Initialize
+const userRepository = new UserRepository(db);
+const userService = new UserService({ userRepository, logger });
+
+// Export deps
+const userDeps = { userService };
+```
 
 ### Testing
 - Use `initializeTestApplication()` from `tests/utils.ts`
