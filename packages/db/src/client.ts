@@ -21,9 +21,11 @@ export interface DatabaseConfig {
   connectionTimeout?: number;
 }
 
-export const createDatabaseClient = (config: DatabaseConfig = {}) => {
+export type Database = ReturnType<typeof drizzle>;
+
+export const createDatabaseClient = async (config: DatabaseConfig = {}) => {
   const connectionString = config.connectionString || dbEnv.DATABASE_URL;
-  
+
   if (!connectionString) {
     throw new ConnectionError('DATABASE_URL is not configured');
   }
@@ -33,11 +35,14 @@ export const createDatabaseClient = (config: DatabaseConfig = {}) => {
       max: config.max || (dbEnv.NODE_ENV === 'production' ? 20 : 5),
       idle_timeout: config.idleTimeout || 20,
       connect_timeout: config.connectionTimeout || 10,
-      onnotice: dbEnv.NODE_ENV === 'development' ? (notice) => logger.debug('PostgreSQL Notice:', notice) : undefined,
+      onnotice:
+        dbEnv.NODE_ENV === 'development'
+          ? (notice) => logger.debug('PostgreSQL Notice:', notice)
+          : undefined,
     });
 
     db = drizzle(client, { schema });
-    
+
     logger.info('Database client initialized', {
       host: new URL(connectionString).hostname,
       max: config.max || (dbEnv.NODE_ENV === 'production' ? 20 : 5),
@@ -45,13 +50,15 @@ export const createDatabaseClient = (config: DatabaseConfig = {}) => {
 
     return db;
   } catch (error) {
-    throw new ConnectionError('Failed to initialize database client', { error });
+    throw new ConnectionError('Failed to initialize database client', {
+      error,
+    });
   }
 };
 
-export const getDatabaseClient = () => {
+export const getDatabaseClient = async () => {
   if (!db) {
-    db = createDatabaseClient();
+    db = await createDatabaseClient();
   }
   return db;
 };
@@ -67,7 +74,7 @@ export const closeDatabaseConnection = async () => {
 
 export const checkDatabaseConnection = async (): Promise<boolean> => {
   try {
-    getDatabaseClient();
+    await getDatabaseClient();
     await client!`SELECT 1`;
     return true;
   } catch (error) {
@@ -75,6 +82,15 @@ export const checkDatabaseConnection = async (): Promise<boolean> => {
     return false;
   }
 };
+
+export const dbClient = {
+  create: createDatabaseClient,
+  get: getDatabaseClient,
+  close: closeDatabaseConnection,
+  check: checkDatabaseConnection,
+};
+
+export type DbClient = typeof dbClient;
 
 // Graceful shutdown
 process.on('SIGINT', async () => {

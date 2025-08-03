@@ -12,7 +12,9 @@ describe('Environment Validation', () => {
   describe('parseEnv', () => {
     it('should validate environment variables with a custom schema', () => {
       const schema = z.object({
-        NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+        NODE_ENV: z
+          .enum(['development', 'test', 'production'])
+          .default('development'),
         PORT: z.string().default('3000'),
         API_KEY: z.string(),
       });
@@ -32,7 +34,9 @@ describe('Environment Validation', () => {
 
     it('should use default values when not provided', () => {
       const schema = z.object({
-        NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+        NODE_ENV: z
+          .enum(['development', 'test', 'production'])
+          .default('development'),
         PORT: z.string().default('3000'),
       });
 
@@ -51,7 +55,9 @@ describe('Environment Validation', () => {
         NODE_ENV: 'invalid-env',
       };
 
-      expect(() => parseEnv(schema, mockEnv)).toThrow('Environment validation failed');
+      expect(() => parseEnv(schema, mockEnv)).toThrow(
+        'Environment validation failed'
+      );
     });
 
     it('should throw on missing required values', () => {
@@ -59,16 +65,21 @@ describe('Environment Validation', () => {
         API_KEY: z.string(),
       });
 
-      expect(() => parseEnv(schema, {})).toThrow('Environment validation failed');
+      expect(() => parseEnv(schema, {})).toThrow(
+        'Environment validation failed'
+      );
     });
   });
 
   describe('createEnv', () => {
     it('should include base environment variables', () => {
-      const result = createEnv((base) => ({
-        ...base.shape,
-        PORT: z.string().default('3000'),
-      }), {});
+      const result = createEnv(
+        (base) => ({
+          ...base.shape,
+          PORT: z.string().default('3000'),
+        }),
+        {}
+      );
 
       expect(result.NODE_ENV).toBe('development');
       expect(result.LOG_LEVEL).toBe('info');
@@ -81,22 +92,28 @@ describe('Environment Validation', () => {
         LOG_LEVEL: 'error',
       };
 
-      const result = createEnv((base) => ({
-        ...base.shape,
-      }), mockEnv);
+      const result = createEnv(
+        (base) => ({
+          ...base.shape,
+        }),
+        mockEnv
+      );
 
       expect(result.NODE_ENV).toBe('production');
       expect(result.LOG_LEVEL).toBe('error');
     });
 
     it('should add custom fields', () => {
-      const result = createEnv((base) => ({
-        ...base.shape,
-        API_URL: z.string().url(),
-        MAX_CONNECTIONS: z.string().transform(Number).default('10'),
-      }), {
-        API_URL: 'https://api.example.com',
-      });
+      const result = createEnv(
+        (base) => ({
+          ...base.shape,
+          API_URL: z.string().url(),
+          MAX_CONNECTIONS: z.string().transform(Number).default('10'),
+        }),
+        {
+          API_URL: 'https://api.example.com',
+        }
+      );
 
       expect(result.API_URL).toBe('https://api.example.com');
       expect(result.MAX_CONNECTIONS).toBe(10);
@@ -106,8 +123,8 @@ describe('Environment Validation', () => {
   describe('baseEnvSchema', () => {
     it('should validate NODE_ENV values', () => {
       const valid = ['development', 'test', 'production'];
-      
-      valid.forEach(env => {
+
+      valid.forEach((env) => {
         const result = baseEnvSchema.parse({ NODE_ENV: env });
         expect(result.NODE_ENV).toBe(env);
       });
@@ -116,9 +133,17 @@ describe('Environment Validation', () => {
     });
 
     it('should validate LOG_LEVEL values', () => {
-      const valid = ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'];
-      
-      valid.forEach(level => {
+      const valid = [
+        'error',
+        'warn',
+        'info',
+        'http',
+        'verbose',
+        'debug',
+        'silly',
+      ];
+
+      valid.forEach((level) => {
         const result = baseEnvSchema.parse({ LOG_LEVEL: level });
         expect(result.LOG_LEVEL).toBe(level);
       });

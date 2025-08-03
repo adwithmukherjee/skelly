@@ -6,7 +6,9 @@ export {
   getDatabaseClient,
   closeDatabaseConnection,
   checkDatabaseConnection,
+  dbClient,
   type DatabaseConfig,
+  type DbClient,
 } from './client';
 
 export type Database = ReturnType<typeof drizzle>;

@@ -3,18 +3,18 @@ import { getDatabaseClient, closeDatabaseConnection } from './client';
 import { users } from './schema/user/users';
 
 const seedUsers = async () => {
-  const db = getDatabaseClient();
-  
+  const db = await getDatabaseClient();
+
   // Check if users already exist
   const existingUsers = await db.select().from(users).limit(1);
-  
+
   if (existingUsers.length > 0) {
     logger.info('Users already exist, skipping seed');
     return;
   }
-  
+
   logger.info('Seeding users...');
-  
+
   // Note: In a real app, passwords would be hashed using bcrypt or similar
   const seedData = [
     {
@@ -38,19 +38,19 @@ const seedUsers = async () => {
       isActive: true,
     },
   ];
-  
+
   await db.insert(users).values(seedData);
-  
+
   logger.info(`Seeded ${seedData.length} users`);
 };
 
 const seed = async () => {
   try {
     logger.info('Starting database seed...');
-    
+
     await seedUsers();
     // Add other seed functions here as we create more tables
-    
+
     logger.info('Database seed completed successfully');
   } catch (error) {
     logger.error('Seed failed', { error });

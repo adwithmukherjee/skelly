@@ -8,19 +8,88 @@ import {
   afterAll,
 } from 'vitest';
 import {
+  PostgreSqlContainer,
+  StartedPostgreSqlContainer,
+} from '@testcontainers/postgresql';
+import {
   createDatabaseClient,
   closeDatabaseConnection,
   checkDatabaseConnection,
+  Database,
 } from '../client';
 import { users } from '../schema/user/users';
 import { eq } from 'drizzle-orm';
-import {
-  createTestDatabase,
-  cleanupTestDatabase,
-  runMigrations,
-  TestDatabase,
-} from './test-utils';
 import { logger } from '@skelly/utils';
+import { Migrator } from '../migrate';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+
+export interface TestDatabase {
+  container: StartedPostgreSqlContainer;
+  connectionString: string;
+  migrator: Migrator;
+  sql: postgres.Sql;
+  db: ReturnType<typeof drizzle>;
+}
+
+/**
+ * Creates an in-memory PostgreSQL container for testing
+ */
+export async function createTestDatabase(): Promise<TestDatabase> {
+  logger.info('Starting PostgreSQL test container...');
+
+  const container = await new PostgreSqlContainer('postgres:16-alpine')
+    .withDatabase('test_db')
+    .withUsername('test_user')
+    .withPassword('test_pass')
+    .start();
+
+  const connectionString = container.getConnectionUri();
+  logger.info('Test container started', { connectionString });
+
+  const migrator = new Migrator(connectionString);
+  const sql = postgres(connectionString, {
+    onnotice: () => {}, // Suppress NOTICE messages
+  });
+  const db = drizzle(sql);
+
+  return {
+    container,
+    connectionString,
+    migrator,
+    sql,
+    db,
+  };
+}
+
+/**
+ * Cleans up test database resources
+ */
+export async function cleanupTestDatabase(
+  testDb: TestDatabase | null
+): Promise<void> {
+  if (!testDb) {
+    return;
+  }
+
+  logger.info('Cleaning up test database...');
+
+  try {
+    if (testDb.migrator) {
+      await testDb.migrator.close();
+    }
+    if (testDb.sql) {
+      await testDb.sql.end();
+    }
+    if (testDb.container) {
+      await testDb.container.stop();
+    }
+    logger.info('Test database cleaned up successfully');
+  } catch (error) {
+    logger.error('Error cleaning up test database', { error });
+    throw error;
+  }
+}
 
 describe('Database Client', () => {
   let testDb: TestDatabase | null = null;
@@ -31,7 +100,7 @@ describe('Database Client', () => {
       testDb = await createTestDatabase();
 
       // Run migrations to set up schema
-      await runMigrations(testDb);
+      await testDb.migrator.up();
 
       logger.info('Test database created for client tests');
     } catch (error) {
@@ -46,29 +115,29 @@ describe('Database Client', () => {
   });
 
   describe('createDatabaseClient', () => {
-    it('should create database client with valid connection string', () => {
+    it('should create database client with valid connection string', async () => {
       if (!testDb) throw new Error('Test database not initialized');
 
-      const db = createDatabaseClient({
+      const db = await createDatabaseClient({
         connectionString: testDb.connectionString,
       });
       expect(db).toBeDefined();
     });
 
-    it('should use custom connection string when provided', () => {
+    it('should use custom connection string when provided', async () => {
       if (!testDb) throw new Error('Test database not initialized');
 
-      const db = createDatabaseClient({
+      const db = await createDatabaseClient({
         connectionString: testDb.connectionString,
       });
       expect(db).toBeDefined();
     });
 
-    it('should throw error when no connection string provided', () => {
+    it('should throw error when no connection string provided', async () => {
       // Test the error case
-      expect(() => createDatabaseClient({ connectionString: '' })).toThrow(
-        'DATABASE_URL is not configured'
-      );
+      await expect(
+        createDatabaseClient({ connectionString: '' })
+      ).rejects.toThrow('DATABASE_URL is not configured');
     });
   });
 
@@ -80,14 +149,14 @@ describe('Database Client', () => {
     it('should return true for valid connection', async () => {
       if (!testDb) throw new Error('Test database not initialized');
 
-      createDatabaseClient({ connectionString: testDb.connectionString });
+      await createDatabaseClient({ connectionString: testDb.connectionString });
       const isConnected = await checkDatabaseConnection();
       expect(isConnected).toBe(true);
     });
 
     it('should handle connection errors gracefully', async () => {
       // Create a client with an invalid connection string
-      createDatabaseClient({
+      await createDatabaseClient({
         connectionString: 'postgresql://invalid:invalid@localhost:9999/nodb',
       });
 
@@ -98,14 +167,16 @@ describe('Database Client', () => {
   });
 
   describe('basic queries', () => {
-    let db: ReturnType<typeof createDatabaseClient>;
+    let db: Database;
 
     beforeEach(async () => {
       if (!testDb) throw new Error('Test database not initialized');
 
       // Close any existing connection and create fresh client
       await closeDatabaseConnection();
-      db = createDatabaseClient({ connectionString: testDb.connectionString });
+      db = await createDatabaseClient({
+        connectionString: testDb.connectionString,
+      });
 
       // Clean up all test data from users table
       await testDb.sql`DELETE FROM "user"."users" WHERE email LIKE 'test%'`;

@@ -2,11 +2,12 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import pgStructure, { Db as PgDb, Table, Column } from 'pg-structure';
 import { getTableConfig } from 'drizzle-orm/pg-core';
 import {
-  createTestDatabase,
-  cleanupTestDatabase,
+  createDatabaseClient,
+  closeDatabaseConnection,
   runMigrations,
   TestDatabase,
-} from './test-utils';
+  getConnectionString,
+} from '../testClient';
 import { users } from '../schema/user/users';
 import { logger } from '@skelly/utils';
 
@@ -17,11 +18,11 @@ describe('Schema Validation', () => {
   beforeAll(async () => {
     try {
       // Create test database and run migrations
-      testDb = await createTestDatabase();
-      await runMigrations(testDb);
+      testDb = await createDatabaseClient();
+      await runMigrations();
 
       // ** ADD ANY NEW SCHEMAS HERE **
-      pgDb = await pgStructure(testDb.connectionString, {
+      pgDb = await pgStructure(getConnectionString()!, {
         includeSchemas: ['public', 'user'],
       });
     } catch (error) {
@@ -31,7 +32,7 @@ describe('Schema Validation', () => {
   }, 60000); // 60 second timeout for container startup
 
   afterAll(async () => {
-    await cleanupTestDatabase(testDb);
+    await closeDatabaseConnection();
   });
 
   describe('Database Schema Matches Drizzle Schema', () => {

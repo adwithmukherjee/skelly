@@ -26,7 +26,7 @@ import { createDatabaseClient, getDatabaseClient, closeDatabaseConnection } from
 const db = getDatabaseClient();
 
 // Custom configuration
-const db = createDatabaseClient({
+const db = await createDatabaseClient({
   connectionString: 'postgresql://user:pass@localhost:5432/mydb',
   max: 20,
   idleTimeout: 20,

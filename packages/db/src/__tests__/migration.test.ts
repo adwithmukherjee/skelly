@@ -9,11 +9,13 @@ import {
 } from 'vitest';
 import { Migrator } from '../migrate';
 import {
-  createTestDatabase,
-  cleanupTestDatabase,
+  createDatabaseClient,
+  getConnectionString,
   TestDatabase,
-} from './test-utils';
+  closeDatabaseConnection,
+} from '../testClient';
 import { logger } from '@skelly/utils';
+import { sql } from 'drizzle-orm';
 
 describe('Migration System', () => {
   let testDb: TestDatabase | null = null;
@@ -22,7 +24,7 @@ describe('Migration System', () => {
   beforeAll(async () => {
     try {
       // Create test database container
-      testDb = await createTestDatabase();
+      testDb = await createDatabaseClient();
       logger.info('Test database created for migration tests');
     } catch (error) {
       logger.error('Failed to create test database', { error });
@@ -31,18 +33,18 @@ describe('Migration System', () => {
   }, 60000); // 60 second timeout for container startup
 
   afterAll(async () => {
-    await cleanupTestDatabase(testDb);
+    await closeDatabaseConnection();
   });
 
   beforeEach(async () => {
     if (!testDb) throw new Error('Test database not initialized');
 
     // Clean up any existing test data
-    await testDb.sql`DROP TABLE IF EXISTS migrations`;
-    await testDb.sql`DROP SCHEMA IF EXISTS test CASCADE`;
+    await testDb.execute(sql`DROP TABLE IF EXISTS migrations`);
+    await testDb.execute(sql`DROP SCHEMA IF EXISTS test CASCADE`);
 
     // Create test migrator with the container connection string
-    migrator = new Migrator(testDb.connectionString);
+    migrator = new Migrator(getConnectionString()!);
   });
 
   afterEach(async () => {
@@ -123,12 +125,12 @@ CREATE SCHEMA test;
 
       await migrator.initialize();
 
-      const tables = await testDb.sql`
+      const tables = await testDb.execute(sql`
         SELECT table_name
         FROM information_schema.tables
         WHERE table_schema = 'public'
         AND table_name = 'migrations'
-      `;
+      `);
 
       expect(tables).toHaveLength(1);
     });
@@ -139,7 +141,9 @@ CREATE SCHEMA test;
       await migrator.initialize();
 
       // Manually insert a migration record
-      await testDb.sql`INSERT INTO migrations (name) VALUES ('test_migration.sql')`;
+      await testDb.execute(
+        sql`INSERT INTO migrations (name) VALUES ('test_migration.sql')`
+      );
 
       const applied = await migrator.getAppliedMigrations();
       expect(applied.has('test_migration.sql')).toBe(true);
@@ -175,13 +179,17 @@ DROP SCHEMA IF EXISTS test;
           const parsed = migrator.parseMigration(testMigration);
           const sqlContent = direction === 'up' ? parsed.up : parsed.down;
 
-          await testDb!.sql.begin(async (tx) => {
-            await tx.unsafe(sqlContent);
+          await testDb!.transaction(async (tx) => {
+            await tx.execute(sql.raw(sqlContent));
 
             if (direction === 'up') {
-              await tx`INSERT INTO migrations (name) VALUES (${filename})`;
+              await tx.execute(
+                sql`INSERT INTO migrations (name) VALUES (${filename})`
+              );
             } else {
-              await tx`DELETE FROM migrations WHERE name = ${filename}`;
+              await tx.execute(
+                sql`DELETE FROM migrations WHERE name = ${filename}`
+              );
             }
           });
           return;
@@ -192,25 +200,26 @@ DROP SCHEMA IF EXISTS test;
       await migrator.up();
 
       // Verify schema was created
-      const schemas = await testDb.sql`
+      const schemas = await testDb.execute(sql`
         SELECT schema_name
         FROM information_schema.schemata
         WHERE schema_name = 'test'
-      `;
+      `);
       expect(schemas).toHaveLength(1);
 
       // Verify table was created
-      const tables = await testDb.sql`
+      const tables = await testDb.execute(sql`
         SELECT table_name
         FROM information_schema.tables
         WHERE table_schema = 'test'
         AND table_name = 'items'
-      `;
+      `);
       expect(tables).toHaveLength(1);
 
       // Verify migration was recorded
-      const migrations =
-        await testDb.sql`SELECT name FROM migrations WHERE name = 'test_001.sql'`;
+      const migrations = await testDb.execute(
+        sql`SELECT name FROM migrations WHERE name = 'test_001.sql'`
+      );
       expect(migrations).toHaveLength(1);
     });
   });
@@ -222,7 +231,9 @@ DROP SCHEMA IF EXISTS test;
       await migrator.initialize();
 
       // Insert two migration records
-      await testDb.sql`INSERT INTO migrations (name) VALUES ('001_first.sql'), ('002_second.sql')`;
+      await testDb.execute(
+        sql`INSERT INTO migrations (name) VALUES ('001_first.sql'), ('002_second.sql')`
+      );
 
       // Mock the runMigration to track calls
       const rollbackCalls: string[] = [];
@@ -232,7 +243,9 @@ DROP SCHEMA IF EXISTS test;
       ) => {
         if (direction === 'down') {
           rollbackCalls.push(filename);
-          await testDb!.sql`DELETE FROM migrations WHERE name = ${filename}`;
+          await testDb!.execute(
+            sql`DELETE FROM migrations WHERE name = ${filename}`
+          );
         }
       };
 
@@ -242,7 +255,7 @@ DROP SCHEMA IF EXISTS test;
       expect(rollbackCalls).toEqual(['002_second.sql', '001_first.sql']);
 
       // Verify migrations were removed from database
-      const remaining = await testDb.sql`SELECT name FROM migrations`;
+      const remaining = await testDb.execute(sql`SELECT name FROM migrations`);
       expect(remaining).toHaveLength(0);
     });
 
@@ -252,10 +265,12 @@ DROP SCHEMA IF EXISTS test;
       await migrator.initialize();
 
       // Insert three migration records
-      await testDb.sql`
+      await testDb.execute(
+        sql`
         INSERT INTO migrations (name)
         VALUES ('001_first.sql'), ('002_second.sql'), ('003_third.sql')
-      `;
+      `
+      );
 
       // Mock the runMigration
       migrator.runMigration = async (
@@ -263,15 +278,18 @@ DROP SCHEMA IF EXISTS test;
         direction?: 'up' | 'down'
       ) => {
         if (direction === 'down') {
-          await testDb!.sql`DELETE FROM migrations WHERE name = ${filename}`;
+          await testDb!.execute(
+            sql`DELETE FROM migrations WHERE name = ${filename}`
+          );
         }
       };
 
       await migrator.down(1);
 
       // Verify only the latest migration was rolled back
-      const remaining =
-        await testDb.sql`SELECT name FROM migrations ORDER BY name`;
+      const remaining = await testDb.execute(
+        sql`SELECT name FROM migrations ORDER BY name`
+      );
       expect(remaining).toHaveLength(2);
       expect(remaining[0].name).toBe('001_first.sql');
       expect(remaining[1].name).toBe('002_second.sql');
@@ -292,7 +310,9 @@ DROP SCHEMA IF EXISTS test;
       await migrator.initialize();
 
       // Insert one applied migration
-      await testDb.sql`INSERT INTO migrations (name) VALUES ('001_applied.sql')`;
+      await testDb.execute(
+        sql`INSERT INTO migrations (name) VALUES ('001_applied.sql')`
+      );
 
       // Mock getMigrationFiles to return two migrations
       migrator.getMigrationFiles = async () => [
