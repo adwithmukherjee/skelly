@@ -1,9 +1,9 @@
 import { User, NewUser, users } from '@skelly/db';
 import { eq, and, sql } from '@skelly/db';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import type { Database } from '@skelly/db';
 
 interface UserServiceDeps {
-  db: PostgresJsDatabase<any>;
+  db: Database;
 }
 
 export class UserService {
