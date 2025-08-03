@@ -18,7 +18,7 @@ export const updateUserHandler = (deps: UserControllerDeps) =>
       params: getUserSchema,
       body: updateUserSchema,
     },
-    async ({ logger, params, body }) => {
+    async ({ params, body }) => {
       const { id } = params;
       const data = body;
 
@@ -39,20 +39,12 @@ export const updateUserHandler = (deps: UserControllerDeps) =>
         }
       }
 
-      // Map 'name' to 'username' if present
-      const updateData = {
-        ...data,
-        ...(data.name && { username: data.name }),
-      };
-      delete (updateData as any).name;
-
-      const user = await deps.userService.update(id, updateData);
-
-      logger.info('User updated', {
-        userId: user.id,
-        changes: Object.keys(data),
+      const result = await deps.userService.update(id, {
+        email: data.email,
+        name: data.name,
+        role: data.role,
       });
 
-      return ApiResult.success(user);
+      return ApiResult.success(result.data);
     }
   );

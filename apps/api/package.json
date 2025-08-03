@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@skelly/db": "*",
+    "@skelly/repositories": "*",
+    "@skelly/services": "*",
     "@skelly/types": "*",
     "@skelly/utils": "*",
     "compression": "^1.7.4",

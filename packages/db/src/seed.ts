@@ -1,4 +1,5 @@
 import { logger } from '@skelly/utils';
+import { UserRole } from '@skelly/types';
 import { getDatabaseClient, closeDatabaseConnection } from './client';
 import { users } from './schema/user/users';
 
@@ -23,7 +24,7 @@ const seedUsers = async () => {
       passwordHash: 'hashed_password_here',
       firstName: 'Admin',
       lastName: 'User',
-      role: 'admin' as const,
+      role: UserRole.ADMIN,
       isEmailVerified: true,
       isActive: true,
     },
@@ -33,7 +34,7 @@ const seedUsers = async () => {
       passwordHash: 'hashed_password_here',
       firstName: 'Test',
       lastName: 'User',
-      role: 'user' as const,
+      role: UserRole.USER,
       isEmailVerified: true,
       isActive: true,
     },

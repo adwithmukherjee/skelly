@@ -22,7 +22,7 @@ export const createUserHandler = (deps: UserControllerDeps) =>
       body: createUserSchema,
       response: createUserResponseSchema,
     },
-    async ({ body, logger }) => {
+    async ({ body }) => {
       // Check if email already exists
       const existing = await deps.userService.findByEmail(body.email);
       if (existing) {
@@ -32,20 +32,14 @@ export const createUserHandler = (deps: UserControllerDeps) =>
         });
       }
 
-      const user = await deps.userService.create({
+      const result = await deps.userService.create({
         email: body.email,
-        username: body.name, // Map 'name' from request to 'username' in DB
-        firstName: null,
-        lastName: null,
-        role: body.role as 'user' | 'admin' | 'moderator',
-        passwordHash: 'hashed_password', // In a real app, you'd hash the password here
-        isEmailVerified: false,
-        isActive: true,
-        lastLoginAt: null,
+        name: body.name,
+        role: body.role,
       });
 
-      logger.info('User created', { userId: user.id, email: user.email });
+      // Log is handled by service, but we can add handler-specific logging if needed
 
-      return ApiResult.success(user);
+      return ApiResult.success(result.data);
     }
   );

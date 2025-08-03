@@ -23,10 +23,16 @@ Initially considered a controller-based pattern but evolved to a more functional
 export async function initializeContainer(inputs?: { dbClient?: DbClient }) {
   const db = inputs?.dbClient ?? dbClient;
   
+  // Initialize repositories
+  userRepository = new UserRepository(await db.get());
+  
+  // Initialize services with repositories
   userService = new UserService({
-    db: await db.get(),
+    userRepository,
+    logger,
   });
   
+  // Package dependencies for handlers
   userDeps = {
     userService,
   };
@@ -192,11 +198,114 @@ export class UserService {
 }
 ```
 
+### Repository Pattern Implementation
+
+After initial implementation, the architecture was refactored to separate data access from business logic:
+
+#### Architecture Evolution
+```
+Before: API → Service (with DB access) → Database
+After:  API → Service (business logic) → Repository (data access) → Database
+```
+
+#### Repository Layer (`packages/repositories`)
+```typescript
+// Base repository for common patterns
+export abstract class DatabaseRepository<T> {
+  constructor(protected readonly db: Database) {}
+  
+  abstract findById(id: string): Promise<T | null>;
+  abstract create(data: any): Promise<T>;
+  abstract update(id: string, data: any): Promise<T>;
+  abstract delete(id: string): Promise<void>;
+}
+
+// Specific implementation
+export class UserRepository extends DatabaseRepository<User> {
+  async findByEmail(email: string): Promise<User | null> {
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    return user || null;
+  }
+  
+  // Other data access methods...
+}
+```
+
+#### Service Layer Refactoring (`packages/services`)
+```typescript
+export interface UserServiceDeps {
+  userRepository: UserRepository;
+  logger: Logger;
+}
+
+export class UserService {
+  constructor(private readonly deps: UserServiceDeps) {}
+  
+  async create(data: CreateUserDto): Promise<UserServiceResult<User>> {
+    // Business validation
+    const existingUser = await this.deps.userRepository.findByEmail(data.email);
+    if (existingUser) {
+      throw new ValidationError('Email already in use');
+    }
+    
+    // Delegate to repository
+    const user = await this.deps.userRepository.create(userData);
+    
+    // Return with domain events
+    return {
+      data: user,
+      events: [{ type: 'user.created', payload: { userId: user.id } }]
+    };
+  }
+}
+```
+
+#### Benefits of Separation
+1. **Clean Architecture**: Clear boundaries between layers
+2. **Testability**: Mock repositories for service tests
+3. **Reusability**: Services usable by API and future worker apps
+4. **Flexibility**: Easy to add caching or change data sources
+5. **Domain Events**: Services return events for async processing
+
 ## Patterns Established
 
 ### 1. File Organization
+
+#### Monorepo Structure
 ```
-src/
+apps/
+├── api/
+│   ├── src/
+│   │   ├── handlers/         # HTTP request handlers
+│   │   ├── routes/           # Route definitions
+│   │   └── container.ts      # Dependency injection
+│   └── tests/                # API integration tests
+├── worker/                   # Future: Async task processing
+└── web/                      # Future: Frontend application
+
+packages/
+├── repositories/             # Data access layer
+│   ├── src/
+│   │   ├── base/            # Base repository classes
+│   │   ├── database/        # Database repositories
+│   │   └── external/        # External API repositories
+│   └── package.json
+├── services/                 # Business logic layer
+│   ├── src/
+│   │   └── user.service.ts  # Domain services
+│   └── package.json
+├── db/                      # Database schema & migrations
+├── types/                   # Shared TypeScript types
+└── utils/                   # Common utilities
+```
+
+#### API Application Structure
+```
+apps/api/src/
 ├── handlers/
 │   └── users/
 │       ├── createUser.ts    # One handler per file
@@ -207,8 +316,6 @@ src/
 │       ├── deps.ts          # Dependencies interface
 │       ├── schemas.ts       # Shared schemas
 │       └── index.ts         # Exports
-├── services/
-│   └── user.service.ts      # Business logic
 └── routes/
     └── user.routes.ts       # Route definitions
 ```
@@ -310,6 +417,52 @@ With these patterns established:
 
 The user management implementation serves as the reference for all future API development, demonstrating best practices and establishing patterns that scale with the application.
 
+## Architectural Refactoring
+
+### Repository/Service Separation
+
+After initial implementation, the architecture was refactored to better support multiple applications (API, Worker, Web) sharing business logic:
+
+#### Package Structure
+- **`packages/repositories`**: Data access layer
+  - Database repositories for each domain entity
+  - External API repositories for third-party services
+  - Base classes for common patterns
+  
+- **`packages/services`**: Business logic layer
+  - Domain services with business rules
+  - Service results include domain events
+  - Clean separation from data access
+
+#### Container Updates
+```typescript
+// Updated container initialization
+export async function initializeContainer(inputs?: { dbClient?: DbClient }) {
+  const db = inputs?.dbClient ?? dbClient;
+  
+  // Layer 1: Repositories (data access)
+  const userRepository = new UserRepository(await db.get());
+  
+  // Layer 2: Services (business logic)
+  const userService = new UserService({
+    userRepository,
+    logger,
+  });
+  
+  // Layer 3: Handler dependencies
+  const userDeps = { userService };
+  
+  return { userDeps };
+}
+```
+
+#### Benefits Realized
+1. **Shared Business Logic**: Services can be used by API, Worker, and CLI
+2. **Clean Testing**: Each layer can be tested independently
+3. **Future Flexibility**: Easy to add caching, change databases, or add new data sources
+4. **Domain Events**: Services return events for event-driven architecture
+5. **Type Safety**: Strong typing across all layers
+
 ## Summary
 
 This ticket successfully:
@@ -322,5 +475,8 @@ This ticket successfully:
 - ✅ Set up development workflow with hot reload
 - ✅ Established consistent error handling
 - ✅ Created reference implementation for future features
+- ✅ Refactored to repository/service architecture
+- ✅ Created shared packages for cross-app usage
+- ✅ Prepared foundation for event-driven patterns
 
-The API is now ready for rapid feature development with established patterns that ensure quality, consistency, and maintainability.
+The API is now ready for rapid feature development with established patterns that ensure quality, consistency, and maintainability across multiple applications in the monorepo.

@@ -3,10 +3,15 @@
  * Centralizes the creation and management of all services and controllers
  */
 
-import { UserService } from './services/user.service';
+import { UserRepository } from '@skelly/repositories';
+import { UserService } from '@skelly/services';
+import { logger } from '@skelly/utils';
 import { HealthControllerDeps } from './handlers/health';
 import { UserControllerDeps } from './handlers/users';
 import { DbClient, dbClient } from '@skelly/db';
+
+// Repositories
+let userRepository: UserRepository;
 
 // Services
 let userService: UserService;
@@ -20,11 +25,16 @@ let userDeps: UserControllerDeps;
  * This function should be called once during app startup
  */
 export async function initializeContainer(inputs?: { dbClient?: DbClient }) {
-  // Initialize services
   const db = inputs?.dbClient ?? dbClient;
+  const database = await db.get();
 
+  // Initialize repositories
+  userRepository = new UserRepository(database);
+
+  // Initialize services
   userService = new UserService({
-    db: await db.get(),
+    userRepository,
+    logger,
   });
 
   // Initialize dependencies

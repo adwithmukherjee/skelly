@@ -12,7 +12,7 @@ export const deleteUserHandler = (deps: UserControllerDeps) =>
     {
       params: deleteUserSchema,
     },
-    async ({ logger, params }) => {
+    async ({ params }) => {
       const { id } = params;
       const user = await deps.userService.findById(id);
       if (!user) {
@@ -20,8 +20,6 @@ export const deleteUserHandler = (deps: UserControllerDeps) =>
       }
 
       await deps.userService.delete(id);
-
-      logger.info('User deleted', { userId: id });
 
       return ApiResult.noContent();
     }

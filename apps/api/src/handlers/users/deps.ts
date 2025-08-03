@@ -1,4 +1,4 @@
-import { UserService } from '../../services/user.service';
+import { UserService } from '@skelly/services';
 
 export interface UserControllerDeps {
   userService: UserService;
