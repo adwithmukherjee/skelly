@@ -45,20 +45,20 @@ This roadmap outlines the implementation plan for setting up the AI-friendly mon
   - Create seed script structure
 
 ### Sprint 3: API Application Setup
-- [ ] **TICKET-007**: Bootstrap Express API server
+- [x] **TICKET-007**: Bootstrap Express API server
   - Initialize apps/api with Express
   - Configure TypeScript and build process
   - Set up basic middleware (cors, helmet, etc.)
   - Create index.ts entry point
   - Add nodemon for development
 
-- [ ] **TICKET-008**: Implement API routing structure
+- [x] **TICKET-008**: Implement API routing structure
   - Create src/routes directory structure
   - Implement route registration system
   - Add health check endpoint
   - Create route documentation pattern
 
-- [ ] **TICKET-009**: Set up controllers and services layers
+- [x] **TICKET-009**: Set up controllers and services layers
   - Create src/controllers directory
   - Create src/services directory
   - Implement base controller patterns
