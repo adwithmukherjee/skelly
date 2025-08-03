@@ -16,6 +16,7 @@ import {
 } from '../testClient';
 import { logger } from '@skelly/utils';
 import { sql } from 'drizzle-orm';
+import { initializeConfig } from '../../../../apps/api/src/config';
 
 describe('Migration System', () => {
   let testDb: TestDatabase | null = null;
@@ -24,6 +25,9 @@ describe('Migration System', () => {
   beforeAll(async () => {
     try {
       // Create test database container
+      initializeConfig({
+        NODE_ENV: 'test',
+      });
       testDb = await createDatabaseClient();
       logger.info('Test database created for migration tests');
     } catch (error) {

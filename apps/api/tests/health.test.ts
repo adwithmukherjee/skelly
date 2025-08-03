@@ -3,17 +3,19 @@ import request from 'supertest';
 import { Application } from 'express';
 import { createApp } from '../src/app';
 import { initializeContainer } from '../src/container';
-import { testDbClient } from '@skelly/db/dist/testClient';
-import { config } from '../src/config';
+import { testDbClient } from '@skelly/db';
+import { initializeConfig } from '../src/config';
 
 describe('Health Check', () => {
   let app: Application;
 
   beforeAll(async () => {
     // Initialize container before creating app
+    initializeConfig({
+      NODE_ENV: 'test',
+    });
     await initializeContainer({
       dbClient: testDbClient,
-      config: config,
     });
     app = createApp();
   });

@@ -2,25 +2,24 @@ import 'dotenv/config';
 
 import { logger } from '@skelly/utils';
 import { createApp } from './app';
-import { config } from './config';
+import { initializeConfig, config } from './config';
 import { initializeContainer } from './container';
-import { dbClient } from '@skelly/db';
 
 async function start() {
   try {
+    // Initialize config first bc its used outside of container
+    initializeConfig();
+
     // Initialize dependency injection container
-    await initializeContainer({
-      dbClient,
-      config,
-    });
+    await initializeContainer();
 
     const app = createApp();
-    const port = parseInt(config.PORT, 10);
+    const port = parseInt(config().PORT, 10);
 
     const server = app.listen(port, () => {
       logger.info(`API server started`, {
         port,
-        environment: config.NODE_ENV,
+        environment: config().NODE_ENV,
         pid: process.pid,
       });
     });

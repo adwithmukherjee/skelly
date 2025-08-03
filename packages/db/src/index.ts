@@ -1,15 +1,9 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 
 // Database client exports
-export {
-  createDatabaseClient,
-  getDatabaseClient,
-  closeDatabaseConnection,
-  checkDatabaseConnection,
-  dbClient,
-  type DatabaseConfig,
-  type DbClient,
-} from './client';
+export { dbClient, type DatabaseConfig, type DbClient } from './client';
+
+export { testDbClient } from './testClient';
 
 export type Database = ReturnType<typeof drizzle>;
 

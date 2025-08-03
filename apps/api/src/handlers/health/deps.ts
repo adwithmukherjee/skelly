@@ -1,5 +1,5 @@
-import type { checkDatabaseConnection } from '@skelly/db';
+import type { DbClient } from '@skelly/db';
 
 export interface HealthControllerDeps {
-  checkDatabaseConnection: typeof checkDatabaseConnection;
+  checkDatabaseConnection: DbClient['check'];
 }

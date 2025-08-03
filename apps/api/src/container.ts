@@ -6,8 +6,7 @@
 import { UserService } from './services/user.service';
 import { HealthControllerDeps } from './handlers/health';
 import { UserControllerDeps } from './handlers/users';
-import { DbClient } from '@skelly/db/dist/client';
-import { Config } from './config';
+import { DbClient, dbClient } from '@skelly/db';
 
 // Services
 let userService: UserService;
@@ -20,18 +19,17 @@ let userDeps: UserControllerDeps;
  * Initialize all dependencies
  * This function should be called once during app startup
  */
-export async function initializeContainer(input: {
-  dbClient: DbClient;
-  config: Config;
-}) {
+export async function initializeContainer(inputs?: { dbClient?: DbClient }) {
   // Initialize services
+  const db = inputs?.dbClient ?? dbClient;
+
   userService = new UserService({
-    db: await input.dbClient.get(),
+    db: await db.get(),
   });
 
   // Initialize dependencies
   healthDeps = {
-    checkDatabaseConnection: input.dbClient.check,
+    checkDatabaseConnection: db.check,
   };
 
   userDeps = {

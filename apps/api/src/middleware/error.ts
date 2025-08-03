@@ -56,7 +56,7 @@ export function errorHandler(
   };
 
   // Include stack trace in development
-  if (isDevelopment && err.stack) {
+  if (isDevelopment() && err.stack) {
     response.error.stack = err.stack;
   }
 
