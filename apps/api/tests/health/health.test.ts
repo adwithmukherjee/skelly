@@ -1,23 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { Application } from 'express';
-import { createApp } from '../src/app';
-import { initializeContainer } from '../src/container';
-import { testDbClient } from '@skelly/db';
-import { initializeConfig } from '../src/config';
+import { initializeTestApplication } from '../utils';
 
-describe('Health Check', () => {
+describe('GET /health', () => {
   let app: Application;
 
   beforeAll(async () => {
-    // Initialize container before creating app
-    initializeConfig({
-      NODE_ENV: 'test',
-    });
-    await initializeContainer({
-      dbClient: testDbClient,
-    });
-    app = createApp();
+    const res = await initializeTestApplication();
+    app = res.app;
   });
 
   afterAll(async () => {
@@ -76,5 +67,28 @@ describe('Health Check', () => {
     const requestIds = responses.map((r) => r.headers['x-request-id']);
     const uniqueIds = new Set(requestIds);
     expect(uniqueIds.size).toBe(3);
+  });
+
+  it('should include service health metrics', async () => {
+    const response = await request(app).get('/health');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.services).toBeDefined();
+    expect(response.body.data.services.database).toBeDefined();
+    expect(response.body.data.services.database.status).toBe('connected');
+    expect(typeof response.body.data.services.database.latency).toBe('number');
+    expect(response.body.data.services.database.latency).toBeGreaterThanOrEqual(
+      0
+    );
+  });
+
+  it('should include process information', async () => {
+    const response = await request(app).get('/health');
+
+    expect(response.status).toBe(200);
+    expect(typeof response.body.data.uptime).toBe('number');
+    expect(response.body.data.uptime).toBeGreaterThan(0);
+    expect(response.body.data.timestamp).toBeDefined();
+    expect(new Date(response.body.data.timestamp).getTime()).not.toBeNaN();
   });
 });

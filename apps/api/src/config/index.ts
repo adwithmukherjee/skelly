@@ -3,19 +3,22 @@ import { z } from 'zod';
 
 let _config: Config | null = null;
 
-const env = () =>
-  createEnv((base) => ({
-    ...base.shape,
-    PORT: z.string().default('3000'),
-    API_PREFIX: z.string().default('/api/v1'),
-    DATABASE_URL: z.string().url().optional(),
-  }));
+const env = (overrides: any = {}) =>
+  createEnv(
+    (base) => ({
+      ...base.shape,
+      PORT: z.string().default('3000'),
+      API_PREFIX: z.string().default('/api/v1'),
+      DATABASE_URL: z.string().url().optional(),
+    }),
+    {
+      ...process.env,
+      ...overrides,
+    }
+  );
 
 export const initializeConfig = (overrides: any = {}) => {
-  _config = {
-    ...env(),
-    ...overrides,
-  };
+  _config = env(overrides);
   return _config;
 };
 

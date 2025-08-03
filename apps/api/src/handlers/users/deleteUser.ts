@@ -4,7 +4,7 @@ import { createHandler, ApiResult } from '../../core';
 import { NotFoundError } from '@skelly/utils';
 
 export const deleteUserSchema = z.object({
-  id: z.string(),
+  id: z.string().uuid(),
 });
 
 export const deleteUserHandler = (deps: UserControllerDeps) =>

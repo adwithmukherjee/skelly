@@ -39,7 +39,14 @@ export const updateUserHandler = (deps: UserControllerDeps) =>
         }
       }
 
-      const user = await deps.userService.update(id, data);
+      // Map 'name' to 'username' if present
+      const updateData = {
+        ...data,
+        ...(data.name && { username: data.name }),
+      };
+      delete (updateData as any).name;
+
+      const user = await deps.userService.update(id, updateData);
 
       logger.info('User updated', {
         userId: user.id,
